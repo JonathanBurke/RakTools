@@ -1,0 +1,60 @@
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
+apply plugin: 'scala'
+
+
+
+println '===================================='
+println '            RakTools                '
+println '===================================='
+
+sourceSets {
+    main {
+        scala {
+            srcDir "src"
+        }
+
+        //Leads to a dir structure of "checker-framework-inference/bin/checkers/...classes...
+        output.classesDir "build/classes"
+    }
+}
+
+dependencies {
+    compile 'org.scala-lang:scala-library:2.10.4'
+}
+
+repositories {
+    mavenCentral()
+}
+
+
+task createRakScript {
+    def programClasses = fileTree("src/rak/programs")
+    programClasses.include "*.scala"
+
+    def iteration = 0
+    def programClassStr = ""
+    programClasses.each {
+        File file ->
+            programClassStr += "programs[" + iteration + "]=\"rak.programs." + file.getName().substring(0, file.getName().length() - ".class".length()) + "\"\n"
+            iteration += 1
+    }
+
+    println("Creating rak script with programs:")
+    println(programClassStr)
+
+    //since copy, rename, filter doesn't seem to work for me I am just doing a rename/line replace using groovy
+    def rakFile = file("scripts/rak")
+    rakFile.withWriter {
+        writer ->
+            file("templates/rak-template.sh").eachLine {
+                line -> (writer << line.replaceAll( 'programs\\[0\\]="program1"', programClassStr ) + "\n")
+            }
+    }
+
+    rakFile.setWritable(true, false)
+
+}
+
+createRakScript.dependsOn build
