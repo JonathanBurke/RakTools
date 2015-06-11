@@ -22,12 +22,13 @@ sourceSets {
 
 dependencies {
     compile 'org.scala-lang:scala-library:2.10.4'
+    compile 'com.github.scopt:scopt_2.10:3.3.0'
+    compile 'org.scalatest:scalatest_2.10:3.0.0-SNAP5'
 }
 
 repositories {
     mavenCentral()
 }
-
 
 task createRakScript {
     def programClasses = fileTree("src/rak/programs")
