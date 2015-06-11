@@ -1,1 +1,23 @@
-Only scala Object definitions with main methods should appear in this directory.
+README - rak.programs
+
+rak.programs holds all of the command line programs in RakTools
+
+Only scala Object definitions with main methods should appear in this directory.  In general these classes
+should be wrappers that read options and call some other class/method to do the real work.
+
+This approach has 3 benefits:
+1) The program class has one specific task: handling program startup and shutdown.
+2) This keeps any functionality from being tied to command line calls and allows it to be called from code.
+3) Readability, mixing the above 2 cases always makes things harder to read.
+
+Note, once built these programs can be called by invoking:
+scripts/rak ProgramName
+
+Where ProgramName is a classname from this package:
+e.g.
+rak.programs.SplitMavenArgs can be run via:
+
+rak SplitMavenArgs <normal argument list>
+
+The rak script is just a wrapper around a java call with the Rak jar on the classpath.  If appends the
+qualified-package to the class name and runs that as the main class.
