@@ -4,13 +4,23 @@ programName="rak.programs."$1
 
 if [ "$#" -lt 1 ]
 then
-   echo "You must specify a program to run!."
+   echo "You must specify a program to run or -p to list all programs!."
    echo "Usage: rak program-name [program-args]"
    exit 1
 fi
 
 #below this line will be an inserted list of all rak programs
 programs[0]="program1"
+
+
+if [ "$1" = "-p" ];
+then
+    echo "known rak programs:"
+    for program in "${programs[@]}"; do
+        echo "    $program"
+    done
+    exit 0
+fi
 
 found=0
 for program in "${programs[@]}"; do
