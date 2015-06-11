@@ -70,4 +70,22 @@ object MavenArgsUtil {
     println( "Writing ignored args to file: " + destFile.getAbsolutePath )
     RakIo.writeLines( destFile, mavenArgs.miscArgs)
   }
+
+  def splitMavenArgs(inputFile : File, outputClassesDir : File, outputSources : File,
+                     outputOptions : File, outputIgnoredOptions : File, exclusionFile : Option[File]): Unit = {
+
+    val mavenArgs : MavenArgs = MavenArgsUtil.parse(inputFile)
+
+    val excludedLines : Option[Set[File]] =
+      exclusionFile.map( exFile =>
+        RakIo.readLinesNow(exFile)
+          .toSet[String]
+          .map(_.dropIfQuoted)
+          .map(_.toFile)
+      )
+
+    MavenArgsUtil.writeSourceFile(mavenArgs, excludedLines, outputSources)
+    MavenArgsUtil.writeCompilerArgs(mavenArgs, outputClassesDir, outputOptions)
+    MavenArgsUtil.writeIgnoredArgs(mavenArgs, outputIgnoredOptions)
+  }
 }

@@ -8,10 +8,13 @@ case class MavenArgs(sourceFiles : Set[File], packageInfos : Set[File], classPat
     val sb = new StringBuilder
     sb ++= "Source Files: \n"
     sb ++= sourceFiles.map(_.getAbsolutePath).mkString("\n")
+
     sb ++= "\nClass Path: \n"
     sb ++= classPath.map(_.getAbsolutePath).mkString(":")
+
     sb ++= "\nMisc. Args: \n"
     sb ++= miscArgs.mkString("\n")
+
     sb.toString
   }
 }

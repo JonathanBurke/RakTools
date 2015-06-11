@@ -25,21 +25,10 @@ object SplitMavenArgs {
     val outputSources = new File(args(2))
     val outputOptions = new File(args(3))
     val outputIgnoredOptions = new File(args(4))
-    val exclusionFile = if (args.length ==6) Some(new File(args(5))) else None
+    val exclusionFile = if (args.length == 6) Some(new File(args(5))) else None
 
-    val mavenArgs : MavenArgs = MavenArgsUtil.parse(inputFile)
-
-    val excludedLines : Option[Set[File]] =
-      exclusionFile.map( exFile =>
-        RakIo.readLinesNow(exFile)
-          .toSet[String]
-          .map(_.dropIfQuoted)
-          .map(_.toFile)
-      )
-
-    MavenArgsUtil.writeSourceFile(mavenArgs, excludedLines, outputSources)
-    MavenArgsUtil.writeCompilerArgs(mavenArgs, outputClassesDir, outputOptions)
-    MavenArgsUtil.writeIgnoredArgs(mavenArgs, outputIgnoredOptions)
+    MavenArgsUtil.splitMavenArgs(inputFile, outputClassesDir, outputSources,
+                                 outputOptions, outputIgnoredOptions, exclusionFile)
   }
 
   def printUsage(errorMsg : String): Unit = {

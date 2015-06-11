@@ -3,11 +3,8 @@ package rak.io
 import java.io.{FileWriter, BufferedWriter, File}
 
 /**
- * Created by jburke on 6/5/15.
  */
 object RakIo {
-
-
 
   /**
    * Writes the input set of lines to the given file
@@ -50,5 +47,14 @@ object RakIo {
     val lines = source.getLines().toList
     source.close()
     lines
+  }
+
+
+  def deleteFileOrFail(file: File): Unit = {
+    if (file.exists()) {
+      if (!file.delete()) {
+        throw new RuntimeException("Could not delete file: " + file.getAbsolutePath)
+      }
+    }
   }
 }
