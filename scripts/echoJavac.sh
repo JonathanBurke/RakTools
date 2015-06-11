@@ -1,8 +1,15 @@
 #!/bin/sh
-echo "" >> /Users/jburke/Documents/tmp/all.args 
-echo "---" >> /Users/jburke/Documents/tmp/all.args 
-echo $* >> /Users/jburke/Documents/tmp/all.args 
-cat ${1:1} >> /Users/jburke/Documents/tmp/all.args
-echo "---" >> /Users/jburke/Documents/tmp/all.args 
-echo "" >> /Users/jburke/Documents/tmp/all.args 
+
+if [ "$INF_ARGS" = "" ];
+then
+    echo "You must set the INF_ARGS environment variable to a file you wish the arguments to be dumped into."
+    exit 1
+fi
+
+echo "" >> $INF_ARGS
+echo "---" >> $INF_ARGS
+echo $* >> $INF_ARGS
+cat ${1:1} >> $INF_ARGS
+echo "---" >> $INF_ARGS
+echo "" >> $INF_ARGS
 javac $*
