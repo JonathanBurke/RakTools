@@ -30,7 +30,7 @@ repositories {
     mavenCentral()
 }
 
-task createRakScript {
+task createRakScripts {
     def programClasses = fileTree("src/rak/programs")
     programClasses.include "*.scala"
 
@@ -54,8 +54,48 @@ task createRakScript {
             }
     }
 
-    rakFile.setWritable(true, false)
+    rakFile.setExecutable(true, false)
 
+
+    def classpathJars = fileTree("build/libs") {
+        include("**/*.jar")
+        exclude("**/scala-*.jar")
+    }
+
+    def classPath = ""
+    def first = true
+    classpathJars.each {
+        //the \\ is because $ is a special regex char and the replaceAll will
+        //throw an IllegalGroupArgument exception
+        jarFile ->
+            if (first) {
+                first = false
+            } else {
+                classPath += ":"
+            }
+            classPath += '\\$libDir/' + jarFile.getName() + ''
+
+    }
+
+    println("Creating scalarak script with classpath:")
+
+    def scalarakFile = file("scripts/scalarak")
+    scalarakFile.withWriter {
+        writer ->
+            file("templates/scalarak-template.sh").eachLine {
+                line -> (writer << line.replaceAll( 'scala', '\\$SCALA_HOME/bin/scala -cp "' +  classPath + '"' ) + "\n")
+            }
+    }
+
+    scalarakFile.setExecutable(true, false)
 }
 
-createRakScript.dependsOn build
+task copyRuntimeLibs(type: Copy) {
+    into "build/libs"
+    from configurations.runtime
+}
+
+
+
+copyRuntimeLibs.dependsOn build
+createRakScripts.dependsOn copyRuntimeLibs
