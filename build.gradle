@@ -57,6 +57,21 @@ task createRakScripts {
     rakFile.setExecutable(true, false)
 
 
+    //since copy, rename, filter doesn't seem to work for me I am just doing a rename/line replace using groovy
+    def rakFileDb = file("scripts/rakdb")
+    rakFileDb.withWriter {
+        writer ->
+            file("templates/rak-template.sh").eachLine {
+                line ->
+                    writer << (line.replaceAll( 'programs\\[0\\]="program1"', programClassStr )
+                                   .replaceAll( 'java -cp', 'java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005 -cp') + "\n")
+
+            }
+    }
+
+    rakFileDb.setExecutable(true, false)
+
+
     def classpathJars = fileTree("build/libs") {
         include("**/*.jar")
         exclude("**/scala-*.jar")
@@ -73,7 +88,7 @@ task createRakScripts {
             } else {
                 classPath += ":"
             }
-            classPath += '\\$libDir/' + jarFile.getName() + ''
+            classPath += '\\$libDir/' + jarFile.getName()
 
     }
 
@@ -88,6 +103,23 @@ task createRakScripts {
     }
 
     scalarakFile.setExecutable(true, false)
+
+    def cfi = System.getenv()["CFI"]
+    def cfiJars = fileTree(cfi + "/dist") {
+        include ("*.jar")
+    }
+
+    cfiJars.each {
+        cfiJar -> classPath += ":" + cfiJar.getAbsolutePath()
+    }
+
+    def scalarakCfiFile = file("scripts/scalarak-cfi")
+    scalarakCfiFile.withWriter {
+        writer ->
+            file("templates/scalarak-template.sh").eachLine {
+                line -> (writer << line.replaceAll( 'scala', '\\$SCALA_HOME/bin/scala -cp "' +  classPath + '"' ) + "\n")
+            }
+    }
 }
 
 task copyRuntimeLibs(type: Copy) {
