@@ -12,7 +12,7 @@ object RakIo {
    * @param append whether or not to append the lines to the file
    * @param lines the lines to write
    */
-  private def writeLines(file : File, append : Boolean, lines : Any*): Unit = {
+  private def writeLines(file : File, append : Boolean, lines : Traversable[_]): Unit = {
     val writer = new BufferedWriter(new FileWriter(file, append))
     lines.foreach(
       line => {
@@ -27,14 +27,14 @@ object RakIo {
   /**
    * Writes the input lines to the given file, this method does not APPEND (see appendLines
    */
-  def writeLines(file : File, lines : Any*): Unit = {
+  def writeLines(file : File, lines : Traversable[_]): Unit = {
     writeLines(file, false, lines)
   }
 
   /**
    * Appends lines to the given file, creates the file if not already created
    */
-  def appendLines(file : File, lines : Any*): Unit = {
+  def appendLines(file : File, lines : Traversable[_]): Unit = {
     writeLines(file, true, lines)
   }
   /**
@@ -55,6 +55,12 @@ object RakIo {
       if (!file.delete()) {
         throw new RuntimeException("Could not delete file: " + file.getAbsolutePath)
       }
+    }
+  }
+
+  def makeDirOrFail(file : File) : Unit = {
+    if (!file.exists() && !file.mkdir()) {
+      throw new RuntimeException("Could not create directory: " + file.getAbsolutePath)
     }
   }
 }

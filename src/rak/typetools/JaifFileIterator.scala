@@ -20,13 +20,13 @@ import scala.io.Source
  */
 object JaifFileIterator {
 
-  val PackageRegex = """package (.*)""".r
+  val PackageRegex = """package (.*):""".r
 
-  case class Insertions(lines: List[String])
-  case class Package(name: String, entries: List[Insertions]) {
+  case class Block(lines: List[String])
+  case class Package(name: String, entries: List[Block]) {
 
     def getLines = {
-      ("package " + name) ++
+      List( ("package " + name + ":")) ++
       entries.map(_.lines ++ "\n").flatten
     }
   }
@@ -34,6 +34,11 @@ object JaifFileIterator {
 
 import JaifFileIterator._
 
+/*
+ * Breaks a file into Packages.  Each package consists of a list of Blocks,
+ * a block is a sequential set of lines in the original JAIF file ending in a newline,
+ * which is excluded.
+ */
 class JaifFileIterator(jaifFile : File) extends Iterator[Package] {
 
   //the package that will be returned by next()
@@ -92,43 +97,53 @@ class JaifFileIterator(jaifFile : File) extends Iterator[Package] {
   private def readPackage() : Unit = {
     if (!lines.hasNext) {
       currentPackage = None
+    } else {
+
+      val lineBuffer = new ListBuffer[String]
+      val blockBuffer = new ListBuffer[Block]
+
+      while (lines.hasNext &&
+        (lines.next.trim match {
+          // if we have a packageName (and it isn't the first one)
+          // create a package and stop reading lines
+          case PackageRegex(packageName: String) =>
+            if (nextPackageName.isDefined) {
+              addBlocks(lineBuffer, blockBuffer)
+              currentPackage = Some(Package(nextPackageName.get.dropRight(1), blockBuffer.toList))
+              nextPackageName = Some(packageName) //drop the semicolon (:) at the end of package declarations
+              false //stop reading lines
+            } else {
+
+              nextPackageName = Some(packageName)
+              true
+            }
+
+          //each blocks object corresponds to 1 block of blocks.
+          //we break out the blocks so we can preserve the block structure of the Jaif
+          case "" =>
+            addBlocks(lineBuffer, blockBuffer)
+            true //continue reading lines
+
+          //this line is part of an block
+          case line: String =>
+            lineBuffer += line
+            true
+        })) {}
+
+      if (!lines.hasNext) {
+        addBlocks(lineBuffer, blockBuffer)
+        currentPackage = Some(Package(nextPackageName.get, blockBuffer.toList))
+      }
     }
-
-    val lineBuffer = new ListBuffer[String]
-    val insertionBuffer = new ListBuffer[Insertions]
-
-    while ( lines.next.trim match {
-      // if we have a packageName (and it isn't the first one)
-      // create a package and stop reading lines
-      case PackageRegex(packageName : String) =>
-        if (nextPackageName.isDefined) {
-          addInsertions(lineBuffer, insertionBuffer)
-          currentPackage = Some(Package(nextPackageName.get, insertionBuffer.toList))
-        }
-
-        nextPackageName = Some(packageName)
-        false //stop reading lines
-
-      //each Insertions object corresponds to 1 block of insertions.
-      //we break out the insertions so we can preserve the block structure of the Jaif
-      case "" =>
-        addInsertions(lineBuffer, insertionBuffer)
-        true //continue reading lines
-
-      //this line is part of an insertion
-      case line : String =>
-        lineBuffer += line
-        true
-    }) {}
   }
 
   /**
-   * Creates an Insertions object using the lines in lineBuffer and clears the lineBuffer.  The resulting
-   * insertions object is added to insertionBuffer.  If lineBuffer is empty, then no object is created or added
+   * Creates an blocks object using the lines in lineBuffer and clears the lineBuffer.  The resulting
+   * blocks object is added to blockBuffer.  If lineBuffer is empty, then no object is created or added
    */
-  private def addInsertions(lineBuffer : ListBuffer[String], insertionBuffer : ListBuffer[Insertions]): Unit = {
+  private def addBlocks(lineBuffer : ListBuffer[String], blockBuffer : ListBuffer[Block]): Unit = {
     if (!lineBuffer.isEmpty) {
-      insertionBuffer += Insertions(lineBuffer.toList)
+      blockBuffer += Block(lineBuffer.toList)
       lineBuffer.clear()
     }
   }

@@ -61,8 +61,10 @@ object MavenArgsUtil {
   def writeCompilerArgs(mavenArgs : MavenArgs, outputClassDir : File, destFile : File) : Unit = {
     println( "Writing classpath and arguments to file: " + destFile.getAbsolutePath )
     RakIo.writeLines( destFile,
-      "-d", outputClassDir.getAbsolutePath,
-      "-classpath", mavenArgs.classPath.mkString(File.pathSeparator)
+      List(
+        "-d", outputClassDir.getAbsolutePath,
+        "-classpath", mavenArgs.classPath.mkString(File.pathSeparator)
+      )
     )
   }
 

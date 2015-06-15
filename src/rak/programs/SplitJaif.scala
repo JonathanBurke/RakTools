@@ -2,6 +2,7 @@ package rak.programs
 
 import java.io.File
 
+import rak.io.RakIo
 import rak.typetools.JaifSplitter
 
 object SplitJaif {
@@ -11,8 +12,11 @@ object SplitJaif {
       printError("Too few arguments!")
     }
 
-    val (filePaths, annos) = args.splitAt(4)
+    val (filePaths, annos) = args.splitAt(3)
     val files = filePaths.map( filePath => new File(filePath))
+
+    val outputDir = files(1)
+    RakIo.makeDirOrFail(outputDir)
 
     JaifSplitter.splitJaif( files(0), files(1), files(2), JaifSplitter.makeHeader( annos.toList) )
   }
@@ -20,6 +24,7 @@ object SplitJaif {
   def printError(message : String): Unit = {
     println(message)
     printUsage()
+    System.exit(1)
   }
 
   def printUsage() : Unit = {

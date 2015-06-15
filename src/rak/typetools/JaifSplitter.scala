@@ -30,18 +30,19 @@ object JaifSplitter {
 
     jaifFileIterator.foreach(
       jaifPackage => {
-        val outputJaif = new File(outputDir, jaifPackage.name)
+        val outputJaif = new File(outputDir, jaifPackage.name + ".jaif")
         if (!visitedFiles.contains(outputJaif)) {
           RakIo.deleteFileOrFail(outputJaif)
-          RakIo.appendLines(outputJaif, header, "\n");
+          RakIo.appendLines(outputJaif, List(header, "\n"))
 
           insertionCommands += makeInsertionCommand(outputJaif, jaifPackage.name)
+          visitedFiles += outputJaif
         }
 
         print("Writing to package file: " + outputJaif.getName + " -- ")
 
         val time = System.currentTimeMillis()
-        RakIo.appendLines(outputJaif, jaifPackage.getLines :_*)
+        RakIo.appendLines(outputJaif, jaifPackage.getLines)
         val timeWriting = time - System.currentTimeMillis()
 
         println("Done! " + (timeWriting / 1000f) + " seconds")
@@ -50,7 +51,7 @@ object JaifSplitter {
     )
 
     println("Writing " + insertionCommands.size + " insertions commands to file: " + commandFile.getAbsolutePath)
-    RakIo.writeLines(commandFile, insertionCommands.toList :_*)
+    RakIo.writeLines(commandFile, insertionCommands.toList)
 
     jaifFileIterator.close()
   }
