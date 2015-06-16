@@ -1,5 +1,8 @@
 #!/bin/sh
 
+rakScripts="`dirname $0`"
+libDir=$rakScripts"/../build/libs"
+
 programName="rak.programs."$1
 
 if [ "$#" -lt 1 ]
@@ -32,7 +35,8 @@ done
 
 if [ $found -eq 1 ]
 then
-    command="java -cp $SCALA_HOME/lib/scala-library.jar:build/libs/RakTools.jar rak.programs."$@
+    #the classpath below will be substituted in the build file
+    command="java -cp classpath rak.programs."$@
     echo "Running: "$command
     eval $command
 else
