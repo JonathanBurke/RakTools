@@ -31,4 +31,20 @@ class RakString(val str : String) {
     } else {
       return str
     }
+
+  def dropLeftOf(regex : String) = {
+    val tokens = str.split(regex, 2)
+    if (tokens.length != 2) {
+      throw new IllegalArgumentException("Did not find " + regex + " in " + str)
+    }
+    regex + tokens(1)
+  }
+
+  def dropRightOf(regex : String) = {
+    val tokens = str.split(regex, 2)
+    if (tokens.length != 2) {
+      throw new IllegalArgumentException("Did not find " + regex + " in " + str)
+    }
+    tokens(0) + regex
+  }
 }

@@ -18,4 +18,7 @@ object JavacTools {
       .map(_.toFile)
       .toList
 
+  def qualifiedNameToPath(packageStr : String) = packageStr.replace(".", File.separator)
+
+  def fileToQualifiedName(file : File) = file.getAbsolutePath.replaceAll(File.separator, ".")
 }

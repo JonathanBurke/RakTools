@@ -63,4 +63,8 @@ object RakIo {
       throw new RuntimeException("Could not create directory: " + file.getAbsolutePath)
     }
   }
+
+  def joinPath(strs : String*) = {
+    strs.mkString(File.separator)
+  }
 }

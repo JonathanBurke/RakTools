@@ -10,7 +10,7 @@ object JaifSplitter {
 
   val DefaultJaifName = new File("default.jaif")
   val SolvedJaifName = new File("solved.jaif")
-
+  val CommandRegex = """^insert-annotations-to-source -i "(.*)" `(.*)`$""".r
 
   /**
    * Split a large jaif into smaller jaifs by package name.  The smaller jaifs are placed
@@ -66,21 +66,38 @@ object JaifSplitter {
     fullyQualifiedAnnotations
       .map( parseAnnotation _ )
       .map({
-        case (packageName, className) =>
+        case (packageName : String, className : String, argsList : List[String]) =>
           "package " + packageName + ":\n" +
-          "annotation " + className + ":"
+          "annotation " + className + ":"  +
+          argsList.mkString("\n")
+
       }).mkString("\n")
   }
 
+
+  val AnnotationRegex = """^((?:\w+\.)*)(\w+)\[(.*)\]$""".r
   /**
    * This method does not handle nested annotations at the moment
    *
    * @param fullyQualifiedAnnotation
    * @return (packageName, AnnotationName)
    */
-  def parseAnnotation(fullyQualifiedAnnotation : String ) : (String, String) = {
-    val lastPeriod = fullyQualifiedAnnotation.lastIndexOf('.')
-    fullyQualifiedAnnotation.splitAt(lastPeriod)
+  def parseAnnotation(fullyQualifiedAnnotation : String ) : (String, String, List[String]) = {
+    fullyQualifiedAnnotation match {
+      case AnnotationRegex(packageNameStr : String, className : String, args : String) => {
+        val packageName = packageNameStr.dropRight(1) //drop trailing (.)
+        val annotatedName = "@" + className
+        val argsList = args.split(",").toList.filter(!_.equals(""))
+
+        (packageName, annotatedName, argsList)
+      }
+
+      case malformed =>
+        throw new IllegalArgumentException(
+          "Annotations must be in the form: package.path.ClassName[arg1,arg2,...,argN]\n" +
+          "found: " + malformed
+        )
+    }
   }
 
   /**
@@ -88,10 +105,15 @@ object JaifSplitter {
    * command that will find the correct files and insert the jaif
    */
   def makeInsertionCommand(jaifFile : File, packageName : String) : String = {
-    val packagePath = packageName.replace(".", File.pathSeparator)
-    val srcPath = "src" + File.pathSeparator + packagePath + File.pathSeparator + ".java"
-    val findPackageSourcesCmd = "` find %1 -path '" + srcPath +"' -maxdepth 1`"
+    val packagePath = packageName.replace(".", File.separator)
+    //right now this is tailored for hadoop
+    val srcPath = "**/src/main/java" + File.separator + packagePath + File.separator + "*.java"
+    val findPackageSourcesCmd = "` find $1 -path " + srcPath + "`"
 
-    "insert-annotations-to-source -i " + jaifFile.getAbsolutePath + " " + findPackageSourcesCmd
+    "insert-annotations-to-source -i \"" + jaifFile.getAbsolutePath + "\" " + findPackageSourcesCmd
+  }
+
+  def makeUnexpandedCommand(jaifFile : File, srcFiles : List[File]) : String = {
+    "insert-annotations-to-source -i " + jaifFile.getAbsolutePath + " " + srcFiles.mkString(" ")
   }
 }

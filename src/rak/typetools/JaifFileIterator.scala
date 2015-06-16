@@ -109,8 +109,8 @@ class JaifFileIterator(jaifFile : File) extends Iterator[Package] {
           case PackageRegex(packageName: String) =>
             if (nextPackageName.isDefined) {
               addBlocks(lineBuffer, blockBuffer)
-              currentPackage = Some(Package(nextPackageName.get.dropRight(1), blockBuffer.toList))
-              nextPackageName = Some(packageName) //drop the semicolon (:) at the end of package declarations
+              currentPackage = Some(Package(nextPackageName.get, blockBuffer.toList))
+              nextPackageName = Some(packageName)
               false //stop reading lines
             } else {
 
