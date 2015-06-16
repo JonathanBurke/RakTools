@@ -45,12 +45,34 @@ task createRakScripts {
     println("Creating rak script with programs:")
     println(programClassStr)
 
+
+    def classpathJars = fileTree("build/libs") {
+        include("**/*.jar")
+    }
+
+    def classPath = ""
+    def firstCpJar = true
+    classpathJars.each {
+            //the \\ is because $ is a special regex char and the replaceAll will
+            //throw an IllegalGroupArgument exception
+        jarFile ->
+            if (firstCpJar) {
+                firstCpJar = false
+            } else {
+                classPath += ":"
+            }
+            classPath += '\\$libDir/' + jarFile.getName()
+    }
+
+
     //since copy, rename, filter doesn't seem to work for me I am just doing a rename/line replace using groovy
     def rakFile = file("scripts/rak")
     rakFile.withWriter {
         writer ->
             file("templates/rak-template.sh").eachLine {
-                line -> (writer << line.replaceAll( 'programs\\[0\\]="program1"', programClassStr ) + "\n")
+                line -> (writer <<
+                        line.replaceAll( 'programs\\[0\\]="program1"', programClassStr )
+                            .replaceAll( 'java -cp classpath', 'java -cp "' + classPath + '"') + "\n")
             }
     }
 
@@ -64,6 +86,7 @@ task createRakScripts {
             file("templates/rak-template.sh").eachLine {
                 line ->
                     writer << (line.replaceAll( 'programs\\[0\\]="program1"', programClassStr )
+                                   .replaceAll( 'java -cp classpath', 'java -cp "' + classPath + '"')
                                    .replaceAll( 'java -cp', 'java -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005 -cp') + "\n")
 
             }
@@ -72,25 +95,26 @@ task createRakScripts {
     rakFileDb.setExecutable(true, false)
 
 
-    def classpathJars = fileTree("build/libs") {
+    def replClasspath = fileTree("build/libs") {
         include("**/*.jar")
         exclude("**/scala-*.jar")
     }
 
-    def classPath = ""
-    def first = true
-    classpathJars.each {
-        //the \\ is because $ is a special regex char and the replaceAll will
-        //throw an IllegalGroupArgument exception
+    def replClassPath = ""
+    def firstReplJar = true
+    replClasspath.each {
+            //the \\ is because $ is a special regex char and the replaceAll will
+            //throw an IllegalGroupArgument exception
         jarFile ->
-            if (first) {
-                first = false
+            if (firstReplJar) {
+                firstReplJar = false
             } else {
-                classPath += ":"
+                replClassPath += ":"
             }
-            classPath += '\\$libDir/' + jarFile.getName()
+            replClassPath += '\\$libDir/' + jarFile.getName()
 
     }
+
 
     println("Creating scalarak script with classpath:")
 
@@ -98,7 +122,7 @@ task createRakScripts {
     scalarakFile.withWriter {
         writer ->
             file("templates/scalarak-template.sh").eachLine {
-                line -> (writer << line.replaceAll( 'scala', '\\$SCALA_HOME/bin/scala -cp "' +  classPath + '"' ) + "\n")
+                line -> (writer << line.replaceAll( 'scala', '\\$SCALA_HOME/bin/scala -cp "' +  replClassPath + '"' ) + "\n")
             }
     }
 
@@ -110,14 +134,14 @@ task createRakScripts {
     }
 
     cfiJars.each {
-        cfiJar -> classPath += ":" + cfiJar.getAbsolutePath()
+        cfiJar -> replClassPath += ":" + cfiJar.getAbsolutePath()
     }
 
     def scalarakCfiFile = file("scripts/scalarak-cfi")
     scalarakCfiFile.withWriter {
         writer ->
             file("templates/scalarak-template.sh").eachLine {
-                line -> (writer << line.replaceAll( 'scala', '\\$SCALA_HOME/bin/scala -cp "' +  classPath + '"' ) + "\n")
+                line -> (writer << line.replaceAll( 'scala', '\\$SCALA_HOME/bin/scala -cp "' +  replClassPath + '"' ) + "\n")
             }
     }
 }
