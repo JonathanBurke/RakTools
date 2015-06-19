@@ -2,6 +2,11 @@ package rak.augment
 
 import java.io.File
 
+import scala.util.matching.Regex
+
+/**
+ * A wrapper around string that provides useful operations.  @see rak.augment.Conversions
+ */
 class RakString(val str : String) {
 
   def toFile : File = new File(str)
@@ -32,19 +37,27 @@ class RakString(val str : String) {
       return str
     }
 
+  /**
+   * Finds the first match of regex and returns IT and everything to the right of it.
+   * @return
+   */
   def dropLeftOf(regex : String) = {
-    val tokens = str.split(regex, 2)
-    if (tokens.length != 2) {
-      throw new IllegalArgumentException("Did not find " + regex + " in " + str)
+    val ToFind = regex.r
+    ToFind.findFirstMatchIn(str) match {
+      case Some (found : Regex.Match) => found.toString() + found.after
+      case None => throw new IllegalArgumentException("Did not find " + regex + " in " + str)
     }
-    regex + tokens(1)
   }
 
+  /**
+   * Finds the first match of regex and returns IT and everything to the left of it.
+   * @return
+   */
   def dropRightOf(regex : String) = {
-    val tokens = str.split(regex, 2)
-    if (tokens.length != 2) {
-      throw new IllegalArgumentException("Did not find " + regex + " in " + str)
+    val ToFind = regex.r
+    ToFind.findFirstMatchIn(str) match {
+      case Some (found : Regex.Match) => found.before + found.toString()
+      case None => throw new IllegalArgumentException("Did not find " + regex + " in " + str)
     }
-    tokens(0) + regex
   }
 }
