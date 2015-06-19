@@ -56,8 +56,9 @@ object JaifInserter {
             val files : Option[List[File]] = packagePathToFiles.get(jaifPackageName)
 
             if (!files.isEmpty) {
+                val jaifLines = RakIo.numLines(jaifFile)
                 val substitutedCommand = JaifSplitter.makeUnexpandedCommand(jaifFile, files.get)
-                Some(JaifStats(index, substitutedCommand, jaifFile, jaifFile.length()))
+                Some(JaifStats(index, substitutedCommand, jaifFile, jaifLines))
 
             } else {
                 println("Could not find source file for : " + jaifPath + "\n")

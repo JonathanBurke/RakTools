@@ -2,6 +2,8 @@ package rak.io
 
 import java.io.{FileWriter, BufferedWriter, File}
 
+import scala.io.Source
+
 /**
  */
 object RakIo {
@@ -66,5 +68,12 @@ object RakIo {
 
   def joinPath(strs : String*) = {
     strs.mkString(File.separator)
+  }
+
+  def numLines(file : File) : Int = {
+    val source = Source.fromFile(file)
+    val numLines = source.getLines().length
+    source.close()
+    numLines
   }
 }
